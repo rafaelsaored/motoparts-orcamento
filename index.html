@@ -1,444 +1,326 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orçamento de Pneus - Honda Motoparts</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+import { useState, useMemo } from "react";
+import { tires } from "@/data/tires";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { MessageCircle, Phone, MapPin } from "lucide-react";
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-        }
+/**
+ * Design Philosophy: Professional, trustworthy motorcycle parts retailer
+ * - Motoparts Brand Colors: Red (#C41E3A) for CTAs and headers
+ * - Clean, functional layout with emphasis on product information
+ * - WhatsApp integration for customer inquiries
+ */
 
-        /* Header com Logo */
-        .header {
-            background-color: #fff;
-            padding: 20px;
-            text-align: center;
-            border-bottom: 4px solid #d32f2f;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+export default function Home() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTires, setSelectedTires] = useState<Set<string>>(new Set());
 
-        .header img {
-            max-width: 300px;
-            height: auto;
-        }
+  const filteredTires = useMemo(() => {
+    return tires.filter(
+      (tire) =>
+        tire.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tire.manufacturerCode.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm]);
 
-        .header-title {
-            margin-top: 15px;
-            font-size: 28px;
-            font-weight: 700;
-            color: #d32f2f;
-        }
+  const toggleTireSelection = (id: string) => {
+    const newSelected = new Set(selectedTires);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedTires(newSelected);
+  };
 
-        .header-subtitle {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-        }
+  const getSelectedTiresInfo = () => {
+    const selected = tires.filter((t) => selectedTires.has(t.id));
+    if (selected.length === 0) return "";
 
-        /* Container Principal */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    let message = "Olá! Gostaria de um orçamento para os seguintes pneus:\n\n";
+    let total = 0;
 
-        /* Seção de Moto */
-        .moto-section {
-            background-color: #fff;
-            margin-bottom: 30px;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+    selected.forEach((tire) => {
+      message += `• ${tire.product}\n`;
+      message += `  Código: ${tire.manufacturerCode}\n`;
+      message += `  Preço: R$ ${tire.promotionalPrice.toFixed(2)}\n\n`;
+      total += tire.promotionalPrice;
+    });
 
-        .moto-header {
-            background-color: #d32f2f;
-            color: white;
-            padding: 20px;
-            font-size: 24px;
-            font-weight: 700;
-        }
+    message += `Total: R$ ${total.toFixed(2)}\n\nPor favor, confirme a disponibilidade e envie-me um orçamento.`;
+    return message;
+  };
 
-        .pneu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
+  const handleWhatsAppClick = () => {
+    const message = getSelectedTiresInfo();
+    if (message) {
+      const encoded = encodeURIComponent(message);
+      window.open(`https://wa.me/5581999960946?text=${encoded}`, "_blank");
+    }
+  };
 
-        .pneu-card {
-            background-color: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            padding: 15px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+  const selectedCount = selectedTires.size;
+  const selectedTotal = tires
+    .filter((t) => selectedTires.has(t.id))
+    .reduce((sum, t) => sum + t.promotionalPrice, 0);
 
-        .pneu-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.15);
-        }
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="bg-primary text-white sticky top-0 z-50 shadow-xl">
+        <div className="container py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="text-3xl font-black" style={{fontFamily: "'Poppins', sans-serif"}}>MOTOPARTS</div>
+              <div className="text-xs font-semibold opacity-90 hidden sm:block">Orçamento de Pneus</div>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <a
+                href="tel:+5581999960946"
+                className="flex items-center gap-1 sm:gap-2 hover:opacity-80 transition text-sm sm:text-base"
+                title="Ligar para Motoparts"
+              >
+                <Phone size={18} className="sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">(81) 99996-0946</span>
+              </a>
+              <a
+                href="https://wa.me/5581999960946"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 px-2 sm:px-3 py-2 rounded font-semibold transition text-sm sm:text-base"
+                title="Enviar mensagem via WhatsApp"
+              >
+                <MessageCircle size={18} className="sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
 
-        .pneu-type {
-            display: inline-block;
-            background-color: #d32f2f;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-primary via-red-600 to-red-800 text-white py-16 sm:py-20">
+        <div className="container">
+          <h1 className="text-3xl sm:text-5xl font-black mb-4" style={{fontFamily: "'Poppins', sans-serif"}}>
+            Orçamento de Pneus para Motos
+          </h1>
+          <p className="text-base sm:text-lg opacity-95 max-w-2xl">
+            Encontre os melhores preços em pneus para sua motocicleta Honda.
+            Selecione os produtos e envie seu orçamento via WhatsApp em segundos.
+          </p>
+        </div>
+      </section>
 
-        .pneu-info {
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 8px;
-        }
+      {/* Main Content */}
+      <main className="container py-8 sm:py-12">
+        {/* Search and Info */}
+        <div className="mb-8">
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-bold mb-2" style={{fontFamily: "'Poppins', sans-serif"}}>
+                🔍 Buscar Pneu
+              </label>
+              <Input
+                placeholder="Digite o código do fabricante ou nome do produto..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
 
-        .pneu-info strong {
-            color: #d32f2f;
-            font-weight: 600;
-        }
+            {/* Selection Summary */}
+            {selectedCount > 0 && (
+              <div className="bg-accent/15 border-2 border-accent rounded-lg p-4 sm:p-6 shadow-md">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <p className="font-bold text-foreground text-lg">
+                      {selectedCount} pneu{selectedCount !== 1 ? "s" : ""} selecionado{selectedCount !== 1 ? "s" : ""}
+                    </p>
+                    <p className="text-sm text-muted-foreground font-semibold">
+                      Total: R$ {selectedTotal.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      onClick={() => setSelectedTires(new Set())}
+                      variant="outline"
+                      className="flex-1 sm:flex-none"
+                    >
+                      Limpar
+                    </Button>
+                    <Button
+                      onClick={handleWhatsAppClick}
+                      className="flex-1 sm:flex-none bg-green-500 hover:bg-green-600 text-white gap-2 font-bold"
+                    >
+                      <MessageCircle size={20} />
+                      Enviar Orcamento
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
-        .pneu-prices {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-        }
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-sm font-semibold text-muted-foreground">
+            📋 Mostrando <span className="text-primary font-bold">{filteredTires.length}</span> de <span className="text-primary font-bold">{tires.length}</span> pneus
+          </p>
+        </div>
 
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
+        {/* Tires Table - Responsive */}
+        <div className="overflow-x-auto rounded-lg shadow-md border border-border">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-primary text-white">
+                <th className="px-3 sm:px-4 py-3 text-left font-bold text-sm" style={{fontFamily: "'Poppins', sans-serif"}}>
+                  ✓
+                </th>
+                <th className="px-3 sm:px-4 py-3 text-left font-bold text-sm hidden md:table-cell" style={{fontFamily: "'Poppins', sans-serif"}}>
+                  Código
+                </th>
+                <th className="px-3 sm:px-4 py-3 text-left font-bold text-sm" style={{fontFamily: "'Poppins', sans-serif"}}>
+                  Produto
+                </th>
+                <th className="px-3 sm:px-4 py-3 text-right font-bold text-sm hidden sm:table-cell" style={{fontFamily: "'Poppins', sans-serif"}}>
+                  Original
+                </th>
+                <th className="px-3 sm:px-4 py-3 text-right font-bold text-sm" style={{fontFamily: "'Poppins', sans-serif"}}>
+                  Promoção
+                </th>
+                <th className="px-3 sm:px-4 py-3 text-right font-bold text-sm hidden sm:table-cell" style={{fontFamily: "'Poppins', sans-serif"}}>
+                  Economia
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTires.map((tire, index) => (
+                <tr
+                  key={tire.id}
+                  className={`border-b transition ${
+                    index % 2 === 0 ? "bg-white" : "bg-secondary/40"
+                  } hover:bg-secondary/60`}
+                >
+                  <td className="px-3 sm:px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedTires.has(tire.id)}
+                      onChange={() => toggleTireSelection(tire.id)}
+                      className="w-5 h-5 cursor-pointer accent-primary rounded"
+                    />
+                  </td>
+                  <td className="px-3 sm:px-4 py-3 font-mono text-xs sm:text-sm hidden md:table-cell text-muted-foreground">
+                    {tire.manufacturerCode}
+                  </td>
+                  <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium">
+                    <div className="line-clamp-2">{tire.product}</div>
+                    <div className="text-xs text-muted-foreground md:hidden mt-1">
+                      {tire.manufacturerCode}
+                    </div>
+                  </td>
+                  <td className="px-3 sm:px-4 py-3 text-right text-xs sm:text-sm line-through text-muted-foreground hidden sm:table-cell">
+                    R$ {tire.regularPrice.toFixed(2)}
+                  </td>
+                  <td className="px-3 sm:px-4 py-3 text-right font-bold text-primary text-sm sm:text-base">
+                    R$ {tire.promotionalPrice.toFixed(2)}
+                  </td>
+                  <td className="px-3 sm:px-4 py-3 text-right text-xs sm:text-sm text-accent font-bold hidden sm:table-cell">
+                    R$ {tire.savings.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        .price-label {
-            color: #666;
-        }
+        {filteredTires.length === 0 && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🔍</div>
+            <p className="text-muted-foreground text-lg font-semibold">
+              Nenhum pneu encontrado para "{searchTerm}"
+            </p>
+            <p className="text-muted-foreground text-sm mt-2">
+              Tente buscar por outro codigo ou nome de produto
+            </p>
+          </div>
+        )}
+      </main>
 
-        .price-value {
-            font-weight: 600;
-            color: #333;
-        }
+      {/* Floating WhatsApp Button */}
+      {selectedCount === 0 && (
+        <a
+          href="https://wa.me/5581999960946"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition transform hover:scale-110 z-40"
+          title="Enviar mensagem via WhatsApp"
+        >
+          <MessageCircle size={28} />
+        </a>
+      )}
 
-        .price-promo {
-            font-size: 18px;
-            font-weight: 700;
-            color: #d32f2f;
-            text-align: right;
-            margin-top: 10px;
-        }
+      {/* Footer */}
+      <footer className="bg-primary text-white mt-16">
+        <div className="container py-12 sm:py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            {/* Contact Info */}
+            <div>
+              <h3 className="text-lg font-bold mb-4" style={{fontFamily: "'Poppins', sans-serif"}}>Contato</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <Phone size={20} className="mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold">(81) 99996-0946</p>
+                    <p className="text-sm opacity-90">WhatsApp</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        /* Footer */
-        .footer {
-            background-color: #fff;
-            padding: 30px 20px;
-            text-align: center;
-            margin-top: 40px;
-            border-top: 4px solid #d32f2f;
-        }
+            {/* Locations */}
+            <div>
+              <h3 className="text-lg font-bold mb-4" style={{fontFamily: "'Poppins', sans-serif"}}>Nossas Unidades</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2 hover:opacity-80 transition">
+                  <MapPin size={16} className="mt-1 flex-shrink-0" />
+                  <span>Recife Centro</span>
+                </li>
+                <li className="flex items-start gap-2 hover:opacity-80 transition">
+                  <MapPin size={16} className="mt-1 flex-shrink-0" />
+                  <span>Casa Amarela</span>
+                </li>
+                <li className="flex items-start gap-2 hover:opacity-80 transition">
+                  <MapPin size={16} className="mt-1 flex-shrink-0" />
+                  <span>Vitória de Santo Antão</span>
+                </li>
+                <li className="flex items-start gap-2 hover:opacity-80 transition">
+                  <MapPin size={16} className="mt-1 flex-shrink-0" />
+                  <span>Gravatá</span>
+                </li>
+                <li className="flex items-start gap-2 hover:opacity-80 transition">
+                  <MapPin size={16} className="mt-1 flex-shrink-0" />
+                  <span>Caruaru</span>
+                </li>
+              </ul>
+            </div>
 
-        .footer-note {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 20px;
-            font-style: italic;
-        }
+            {/* About */}
+            <div>
+              <h3 className="text-lg font-bold mb-4" style={{fontFamily: "'Poppins', sans-serif"}}>Sobre Motoparts</h3>
+              <p className="text-sm opacity-90 leading-relaxed">
+                Desde 1972, a Motoparts é a principal revendedora Honda em
+                Pernambuco, oferecendo qualidade, confiança e o melhor
+                atendimento aos nossos clientes.
+              </p>
+            </div>
+          </div>
 
-        .whatsapp-button {
-            display: inline-block;
-            background-color: #25d366;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 16px;
-            margin: 10px 5px;
-            transition: background-color 0.3s;
-        }
-
-        .whatsapp-button:hover {
-            background-color: #20ba5a;
-        }
-
-        .whatsapp-button i {
-            margin-right: 8px;
-        }
-
-        /* Responsivo */
-        @media (max-width: 768px) {
-            .header-title {
-                font-size: 22px;
-            }
-
-            .moto-header {
-                font-size: 20px;
-                padding: 15px;
-            }
-
-            .pneu-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
-                padding: 15px;
-            }
-
-            .header img {
-                max-width: 250px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header {
-                padding: 15px;
-            }
-
-            .header img {
-                max-width: 200px;
-            }
-
-            .header-title {
-                font-size: 20px;
-            }
-
-            .moto-header {
-                font-size: 18px;
-            }
-
-            .pneu-grid {
-                padding: 10px;
-            }
-
-            .pneu-card {
-                padding: 12px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header com Logo -->
-    <div class="header">
-        <img src="/home/ubuntu/upload/pasted_file_kVVVOb_image.png" alt="Honda Motoparts">
-        <div class="header-title">Orçamento de Pneus</div>
-        <div class="header-subtitle">Confira as melhores opções e preços para sua motocicleta</div>
+          <div className="border-t border-white/20 pt-8 text-center text-sm opacity-90">
+            <p>&copy; 2026 Motoparts Honda. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </footer>
     </div>
-
-    <!-- Conteúdo Principal -->
-    <div class="container">
-        <!-- ADV 150 -->
-        <div class="moto-section">
-            <div class="moto-header">Honda ADV 150</div>
-            <div class="pneu-grid">
-                <div class="pneu-card">
-                    <span class="pneu-type">DIANTEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 110/80-14 53P</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Metzeler</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Tourance DP TL</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 913,21</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 705,00</div>
-                    </div>
-                </div>
-                <div class="pneu-card">
-                    <span class="pneu-type">TRASEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 130/70-13 57P</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Metzeler</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Tourance DP TL</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 1.138,84</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 766,00</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- BIZ/POP -->
-        <div class="moto-section">
-            <div class="moto-header">Honda Biz / Pop</div>
-            <div class="pneu-grid">
-                <div class="pneu-card">
-                    <span class="pneu-type">DIANTEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 60/100-17 33L</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Super City</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 374,00</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 250,00</div>
-                    </div>
-                </div>
-                <div class="pneu-card">
-                    <span class="pneu-type">TRASEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 80/100-14 49L</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Super City</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 490,00</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 320,00</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- BROS 150/160 e XRE 190 -->
-        <div class="moto-section">
-            <div class="moto-header">Honda Bros 150/160 e XRE 190</div>
-            <div class="pneu-grid">
-                <div class="pneu-card">
-                    <span class="pneu-type">DIANTEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 90/90-19 52P</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> MT60</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 520,00</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 475,00</div>
-                    </div>
-                </div>
-                <div class="pneu-card">
-                    <span class="pneu-type">TRASEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 110/90-17</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> MT60</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 581,00</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 550,00</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CB 250F -->
-        <div class="moto-section">
-            <div class="moto-header">Honda CB 250F</div>
-            <div class="pneu-grid">
-                <div class="pneu-card">
-                    <span class="pneu-type">TRASEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 140/70R17 66H</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Diablo Rosso II-R</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 875,00</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 789,00</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CB 300F -->
-        <div class="moto-section">
-            <div class="moto-header">Honda CB 300F Twister</div>
-            <div class="pneu-grid">
-                <div class="pneu-card">
-                    <span class="pneu-type">DIANTEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 110/70R17 54H</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Diablo Rosso III</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 1.768,57</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 705,00</div>
-                    </div>
-                </div>
-                <div class="pneu-card">
-                    <span class="pneu-type">TRASEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 150/60R17 66H</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Diablo Rosso III</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 2.486,43</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 970,00</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CG 150/160 -->
-        <div class="moto-section">
-            <div class="moto-header">Honda CG 150 / CG 160</div>
-            <div class="pneu-grid">
-                <div class="pneu-card">
-                    <span class="pneu-type">TRASEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 90/90-18</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> City Dragon S/ Câmara</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 547,00</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 495,00</div>
-                    </div>
-                </div>
-                <div class="pneu-card">
-                    <span class="pneu-type">TRASEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 100/90-18 56P</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Super City</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 550,00</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 435,00</div>
-                    </div>
-                </div>
-                <div class="pneu-card">
-                    <span class="pneu-type">TRASEIRO</span>
-                    <div class="pneu-info"><strong>Medida:</strong> 90/90-18 51P</div>
-                    <div class="pneu-info"><strong>Marca:</strong> Pirelli</div>
-                    <div class="pneu-info"><strong>Modelo:</strong> Super City</div>
-                    <div class="pneu-prices">
-                        <div class="price-row">
-                            <span class="price-label">Preço Normal:</span>
-                            <span class="price-value">R$ 460,00</span>
-                        </div>
-                        <div class="price-promo">Promoção: R$ 420,00</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ELITE 125 / LEAD 110 -->
-        <div class="moto-section">
-            <div class="moto-header">Honda Elite 125 / Lead 110</div>
-            <div class="pneu-grid">
-                <div class="pneu-card">
-                    <span class="pneu-type">DIANTEIRO</span>
+  );
+}
